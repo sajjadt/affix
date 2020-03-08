@@ -1,55 +1,53 @@
 #include "application.h"
-#include "cl_util.h"
+#include "opencl_util.h"
 
 #include <string>
 #include <iostream>
 #include <cassert>
 #include "params.h"
-#include "cl_manager.h"
+#include "opencl_manager.h"
 #include <opencv2/opencv.hpp>
 
 #define GMEM_SIZE (8*1024*1024)
 
 class AutoC: public Application {
   public:
-    AutoC(CLManager * cl_manager);
-    //std::vector<std::future<void>> tile_process(int, int, Tile, std::unique_ptr<Task::Scheduler>&) override;
-    GraphCut get_execution_cut(const cl::Program&,
+    AutoC(OpenCLManager * cl_manager);
+    GraphCut GetExecutionCut(const cl::Program&,
                               const cl::Pipe&,
                               const cl::Pipe&, int, int) override;
-    int get_cut_input_total(int) override;
-    int get_cut_output_total(int) override;
-    bool need_reordering(int) override;
+    int GetCutInputTotal(int) override;
+    int GetCutOutputTotal(int) override;
+    bool NeedReordering(int) override;
 
-    CutData get_input_data(int) override;
-    CutData get_output_data(int) override;
-    void set_cut_data_info(const cv::Mat&) override;
+    CutData GetInputData(int) override;
+    CutData GetOutputData(int) override;
+    void SetCutDataInfo(const cv::Mat&) override;
 
-    void pre_process_cut(int, int) override;
-    void post_process_cut(int, int) override;
+    void PreProcessCut(int, int) override;
+    void PostProcessCut(int, int) override;
 
     void set_global_buffers();
 
   private:
     int rows, cols;
     cl::Buffer fpga_global_buffers[4];
-    CLManager* cl_manager;
+    OpenCLManager* cl_manager;
 };
 
-AutoC::AutoC(CLManager * cl_manager) : Application("app-autoc", 2, seq_size, Color::RGBX), rows(0), cols(0), 
-cl_manager(cl_manager)
-{
+AutoC::AutoC(OpenCLManager * cl_manager) : Application("app-autoc", 2, seq_size, Color::RGBX), rows(0), cols(0), 
+cl_manager(cl_manager) {
   set_global_buffers();
 }
 
 void AutoC::set_global_buffers() {
   cl_int status;
-  fpga_global_buffers[0] = cl_manager->create_fpga_buffer(CL_MEM_READ_WRITE, GMEM_SIZE);
-  fpga_global_buffers[1] = cl_manager->create_fpga_buffer(CL_MEM_READ_WRITE, GMEM_SIZE);
-  fpga_global_buffers[2] = cl_manager->create_fpga_buffer(CL_MEM_READ_WRITE, GMEM_SIZE);
+  fpga_global_buffers[0] = cl_manager->CreateFpgaBuffer(CL_MEM_READ_WRITE, GMEM_SIZE);
+  fpga_global_buffers[1] = cl_manager->CreateFpgaBuffer(CL_MEM_READ_WRITE, GMEM_SIZE);
+  fpga_global_buffers[2] = cl_manager->CreateFpgaBuffer(CL_MEM_READ_WRITE, GMEM_SIZE);
 }
 
-void AutoC::set_cut_data_info(const cv::Mat& in_img) {
+void AutoC::SetCutDataInfo(const cv::Mat& in_img) {
   cut_inputs.clear();
   cut_outputs.clear();
 
@@ -67,21 +65,21 @@ void AutoC::set_cut_data_info(const cv::Mat& in_img) {
   cut_outputs.push_back(cut_out_2);
 }
 
-CutData AutoC::get_input_data(int i) {
+CutData AutoC::GetInputData(int i) {
   // Return input image for the first cut
   CutData cut = cut_inputs.at(i);
-  std::cout<< cut.total() << std::endl;
+  std::cout<< cut.Total() << std::endl;
   return cut;
 }
 
-CutData AutoC::get_output_data(int i) {
+CutData AutoC::GetOutputData(int i) {
   return cut_outputs.at(i);
 }
 
 
-void AutoC::pre_process_cut(int seq_no, int cut_no) {}
+void AutoC::PreProcessCut(int seq_no, int cut_no) {}
 
-void AutoC::post_process_cut(int seq_no, int cut_no) {
+void AutoC::PostProcessCut(int seq_no, int cut_no) {
   assert (cut_no < 2);
   if (cut_no == 1) {
     std::cout<<"Saving image"<<std::endl;
@@ -90,20 +88,20 @@ void AutoC::post_process_cut(int seq_no, int cut_no) {
   }
 }
 
-bool AutoC::need_reordering(int cut_index) {
+bool AutoC::NeedReordering(int cut_index) {
   return false;
 }
 
-int AutoC::get_cut_input_total(int index) {
+int AutoC::GetCutInputTotal(int index) {
   assert(index < num_cuts);
-  return cut_inputs[index].total();
+  return cut_inputs[index].Total();
 }
-int AutoC::get_cut_output_total(int index) {
+int AutoC::GetCutOutputTotal(int index) {
   assert(index < num_cuts);
-  return cut_outputs[index].total();
+  return cut_outputs[index].Total();
 }
 
-GraphCut AutoC::get_execution_cut(const cl::Program& program,
+GraphCut AutoC::GetExecutionCut(const cl::Program& program,
                                   const cl::Pipe& read_pipe,
                                   const cl::Pipe& write_pipe, int seq_no, int cut_index) {
 
@@ -112,8 +110,8 @@ GraphCut AutoC::get_execution_cut(const cl::Program& program,
   cl_int status;
   GraphCut cut;
 
-  std::vector<std::string> app_kernels;
-  cl_uint items = get_cut_input_total(0);
+  std::vector<std::string> application_kernels;
+  cl_uint items = GetCutInputTotal(0);
   
   if (cut_index ==0) {
     auto kernel_info = {
@@ -176,6 +174,6 @@ GraphCut AutoC::get_execution_cut(const cl::Program& program,
   return cut;
 }
 
-Application* get_app(CLManager* cl_manager) {
+Application* GetAppliaction(OpenCLManager* cl_manager) {
   return new AutoC(cl_manager);
 }

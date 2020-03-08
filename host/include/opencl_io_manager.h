@@ -13,16 +13,14 @@
 #include <stdio.h> 
 #include <unistd.h> // readlink, chdir
 
-class CLIOManager {
+class OpenCLIOManager {
 public:
-  CLIOManager() {}
-  void init(const cl::Context&);
-  void release();
+  OpenCLIOManager() {}
+  void Init(const cl::Context&);
+  void Release();
   int init_io();
-  void overlapped_io(unsigned char* inbuffer, unsigned char* outbuffer, cl_ulong insize, cl_ulong outsize);
-  void io(unsigned char* inbuffer, unsigned char* outbuffer, cl_ulong insize, cl_ulong outsize);
+  void OverlappedIO(unsigned char* inbuffer, unsigned char* outbuffer, cl_ulong insize, cl_ulong outsize);
   cl::Pipe read_pipe, write_pipe;
-
 private:	
   static const int packet_sz = 32;
   static const int  KB = 1024;

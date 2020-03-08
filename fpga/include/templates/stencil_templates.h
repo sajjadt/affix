@@ -1,7 +1,7 @@
 #pragma once
 #include "common.h"
 
-#define STENCIL_KERNEL_1(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL) \
+#define STENCIL_KERNEL_1(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = (FILTER_DIM-1)*(TILE_DIM) + MAX(3, (FILTER_DIM-1)+1);\
@@ -32,7 +32,7 @@
       }\
       if (i < tile_items) {\
         TYPE(input, IN_TYPE, 1);\
-        input  = read_channel_intel(IN_CHANNEL); \
+        input  = read_channel_intel(IN_CH); \
         buffer[buffer_size-1] = input;\
       } else {\
         buffer[buffer_size-1] = zero;\
@@ -56,13 +56,13 @@
         }\
       }\
       if (i >= buffer_ready_size) {\
-        write_channel_intel(OUT_CHANNEL, real_filter_out);\
+        write_channel_intel(OUT_CH, real_filter_out);\
       }\
     }\
   }\
   LOG("finished", #NAME);\
 }
-#define STENCIL_KERNEL_(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL) \
+#define STENCIL_KERNEL_(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = (FILTER_DIM-1)*(TILE_DIM) + MAX(3*UNROLL, (FILTER_DIM-1)+UNROLL);\
@@ -97,7 +97,7 @@
       LOGARR("after.shift", buffer, buffer_size)\
       if (i < tile_items) {\
         TYPE(input, IN_TYPE, UNROLL);\
-        input  = read_channel_intel(IN_CHANNEL); \
+        input  = read_channel_intel(IN_CH); \
         _Pragma("unroll") \
         for(int j =0 ;j < UNROLL;j++) {\
           buffer[buffer_size-1-j] = input[UNROLL - 1 - j];\
@@ -129,13 +129,13 @@
         }\
       }\
       if (i >= buffer_ready_size) {\
-        write_channel_intel(OUT_CHANNEL, real_filter_out);\
+        write_channel_intel(OUT_CH, real_filter_out);\
       }\
     }\
   }\
   LOG("finished", #NAME);\
 }
-#define STENCIL_KERNEL_32(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL) \
+#define STENCIL_KERNEL_32(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = (FILTER_DIM-1)*(TILE_DIM) + MAX(3*UNROLL, (FILTER_DIM-1)+UNROLL);\
@@ -166,7 +166,7 @@
       LOGARR("after.shift", buffer, buffer_size)\
       if (i < tile_items) {\
         TYPE(input, IN_TYPE, UNROLL);\
-        input  = read_channel_intel(IN_CHANNEL); \
+        input  = read_channel_intel(IN_CH); \
         _Pragma("unroll") \
         for(int j =0 ;j < 16;j++) {\
           buffer[buffer_size-1-j] = input.hi[16 - 1 - j];\
@@ -206,7 +206,7 @@
         }\
       }\
       if (i >= buffer_ready_size) {\
-        write_channel_intel(OUT_CHANNEL, real_filter_out);\
+        write_channel_intel(OUT_CH, real_filter_out);\
       }\
     }\
   }\
@@ -216,10 +216,10 @@
 #define STENCIL_KERNEL_4(A0, A1, A2, A3, A4, A5, A6, A7, A8) STENCIL_KERNEL_(A0, A1, A2, A3, A4, A5, A6, A7, A8)
 #define STENCIL_KERNEL_8(A0, A1, A2, A3, A4, A5, A6, A7, A8) STENCIL_KERNEL_(A0, A1, A2, A3, A4, A5, A6, A7, A8)
 #define STENCIL_KERNEL_16(A0, A1, A2, A3, A4, A5, A6, A7, A8) STENCIL_KERNEL_(A0, A1, A2, A3, A4, A5, A6, A7, A8)
-#define STENCIL_KERNEL(NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL) \
- CAT2(STENCIL_KERNEL, SIMD_SIZE) (NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL)
+#define STENCIL_KERNEL(NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH) \
+ CAT2(STENCIL_KERNEL, SIMD_SIZE) (NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH)
 
-#define STENCIL_KERNEL_G_1(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL, COEFFS, SHIFT) \
+#define STENCIL_KERNEL_G_1(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH, COEFFS, SHIFT) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = (FILTER_DIM-1)*(TILE_DIM) + MAX(3, (FILTER_DIM-1)+1);\
@@ -250,7 +250,7 @@
       LOGARR("after.shift", buffer, buffer_size)\
       if (i < tile_items) {\
         TYPE(input, IN_TYPE, 1);\
-        input  = read_channel_intel(IN_CHANNEL); \
+        input  = read_channel_intel(IN_CH); \
         buffer[buffer_size-1] = input;\
       } else {\
         buffer[buffer_size-1] = zero;\
@@ -278,14 +278,14 @@
         }\
       }\
       if (i >= buffer_ready_size) {\
-        write_channel_intel(OUT_CHANNEL, real_filter_out);\
+        write_channel_intel(OUT_CH, real_filter_out);\
       }\
     }\
   }\
   LOG("finished", #NAME);\
 }
 
-#define STENCIL_KERNEL_G_(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL, COEFFS, SHIFT) \
+#define STENCIL_KERNEL_G_(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH, COEFFS, SHIFT) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = (FILTER_DIM-1)*(TILE_DIM) + MAX(3*UNROLL, (FILTER_DIM-1)+UNROLL);\
@@ -316,7 +316,7 @@
       LOGARR("after.shift", buffer, buffer_size)\
       if (i < tile_items) {\
         TYPE(input, IN_TYPE, UNROLL);\
-        input  = read_channel_intel(IN_CHANNEL); \
+        input  = read_channel_intel(IN_CH); \
         _Pragma("unroll") \
         for(int j =0 ;j < UNROLL;j++) {\
           buffer[buffer_size-1-j] = input[UNROLL - 1 - j];\
@@ -349,7 +349,7 @@
         }\
       }\
       if (i >= buffer_ready_size) {\
-        write_channel_intel(OUT_CHANNEL, real_filter_out);\
+        write_channel_intel(OUT_CH, real_filter_out);\
       }\
     }\
   }\
@@ -360,10 +360,10 @@
 #define STENCIL_KERNEL_G_4(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) STENCIL_KERNEL_G_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)
 #define STENCIL_KERNEL_G_8(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) STENCIL_KERNEL_G_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)
 #define STENCIL_KERNEL_G_16(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) STENCIL_KERNEL_G_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)
-#define STENCIL_KERNEL_GEN(NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL, COEFFS, SHIFT) \
- CAT2(STENCIL_KERNEL_G, SIMD_SIZE) (NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL, COEFFS, SHIFT)
+#define STENCIL_KERNEL_GEN(NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH, COEFFS, SHIFT) \
+ CAT2(STENCIL_KERNEL_G, SIMD_SIZE) (NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH, COEFFS, SHIFT)
 
-#define STENCIL_KERNEL_COL_G_(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL, COEFFS, SHIFT) \
+#define STENCIL_KERNEL_COL_G_(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH, COEFFS, SHIFT) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = (FILTER_DIM-1)*(TILE_DIM) + MAX(3*UNROLL, (FILTER_DIM-1)+UNROLL);\
@@ -394,7 +394,7 @@
       LOGARR("after.shift", buffer, buffer_size)\
       if (i < tile_items) {\
         TYPE(input, IN_TYPE, UNROLL);\
-        input  = read_channel_intel(IN_CHANNEL); \
+        input  = read_channel_intel(IN_CH); \
         _Pragma("unroll") \
         for(int j =0 ;j < UNROLL;j++) {\
           buffer[buffer_size-1-j] = input[UNROLL - 1 - j];\
@@ -427,14 +427,14 @@
         }\
       }\
       if (i >= buffer_ready_size) {\
-        write_channel_intel(OUT_CHANNEL, real_filter_out);\
+        write_channel_intel(OUT_CH, real_filter_out);\
       }\
     }\
   }\
   LOG("finished", #NAME);\
 }
 
-#define STENCIL_KERNEL_COL_G_1(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL, COEFFS, SHIFT) \
+#define STENCIL_KERNEL_COL_G_1(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH, COEFFS, SHIFT) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = (FILTER_DIM-1)*(TILE_DIM) + MAX(3, (FILTER_DIM-1)+UNROLL);\
@@ -465,7 +465,7 @@
       LOGARR("after.shift", buffer, buffer_size)\
       if (i < tile_items) {\
         IN_TYPE input;\
-        input  = read_channel_intel(IN_CHANNEL); \
+        input  = read_channel_intel(IN_CH); \
         buffer[buffer_size-1] = input;\
       } else {\
         buffer[buffer_size-1] = zero;\
@@ -487,7 +487,7 @@
           }\
         }\
       if (i >= buffer_ready_size) {\
-        write_channel_intel(OUT_CHANNEL, real_filter_out);\
+        write_channel_intel(OUT_CH, real_filter_out);\
       }\
     }\
   }\
@@ -497,11 +497,11 @@
 #define STENCIL_KERNEL_COL_G_4(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) STENCIL_KERNEL_COL_G_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)
 #define STENCIL_KERNEL_COL_G_8(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) STENCIL_KERNEL_COL_G_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)
 #define STENCIL_KERNEL_COL_G_16(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) STENCIL_KERNEL_COL_G_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)
-#define STENCIL_KERNEL_COL_GEN(NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL, COEFFS, SHIFT) \
- CAT2(STENCIL_KERNEL_COL_G, SIMD_SIZE) (NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL, COEFFS, SHIFT)
+#define STENCIL_KERNEL_COL_GEN(NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH, COEFFS, SHIFT) \
+ CAT2(STENCIL_KERNEL_COL_G, SIMD_SIZE) (NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH, COEFFS, SHIFT)
 
 
-#define STENCIL_KERNEL_ROW_G_(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL, COEFFS, SHIFT) \
+#define STENCIL_KERNEL_ROW_G_(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH, COEFFS, SHIFT) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = MAX( (FILTER_DIM)+(UNROLL)-1, 3*UNROLL);\
@@ -529,7 +529,7 @@
     LOGARR("after.shift", buffer, buffer_size)\
     if (i < tile_items) {\
       TYPE(input, IN_TYPE, UNROLL);\
-      input  = read_channel_intel(IN_CHANNEL); \
+      input  = read_channel_intel(IN_CH); \
       _Pragma("unroll") \
       for(int j =0 ;j < UNROLL;j++) {\
         buffer[buffer_size-1-j] = input[UNROLL - 1 - j];\
@@ -562,13 +562,13 @@
       }\
     }\
     if (i >= buffer_ready_size) {\
-      write_channel_intel(OUT_CHANNEL, real_filter_out);\
+      write_channel_intel(OUT_CH, real_filter_out);\
     }\
   }\
   LOG("finished", #NAME);\
 }
 
-#define STENCIL_KERNEL_ROW_G_1(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL, COEFFS, SHIFT) \
+#define STENCIL_KERNEL_ROW_G_1(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH, COEFFS, SHIFT) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = MAX( (FILTER_DIM), 3);\
@@ -596,7 +596,7 @@
     LOGARR("after.shift", buffer, buffer_size)\
     if (i < tile_items) {\
       IN_TYPE input;\
-      input  = read_channel_intel(IN_CHANNEL); \
+      input  = read_channel_intel(IN_CH); \
       buffer[buffer_size-1] = input;\
     } else {\
       buffer[buffer_size-1] = zero;\
@@ -618,7 +618,7 @@
       }\
     }\
     if (i >= buffer_ready_size) {\
-      write_channel_intel(OUT_CHANNEL, real_filter_out);\
+      write_channel_intel(OUT_CH, real_filter_out);\
     }\
   }\
   LOG("finished", #NAME);\
@@ -627,10 +627,10 @@
 #define STENCIL_KERNEL_ROW_G_4(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) STENCIL_KERNEL_ROW_G_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)
 #define STENCIL_KERNEL_ROW_G_8(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) STENCIL_KERNEL_ROW_G_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)
 #define STENCIL_KERNEL_ROW_G_16(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) STENCIL_KERNEL_ROW_G_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)
-#define STENCIL_KERNEL_ROW_GEN(NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL, COEFFS, SHIFT) \
- CAT2(STENCIL_KERNEL_ROW_G, SIMD_SIZE) (NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL, COEFFS, SHIFT)
+#define STENCIL_KERNEL_ROW_GEN(NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH, COEFFS, SHIFT) \
+ CAT2(STENCIL_KERNEL_ROW_G, SIMD_SIZE) (NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH, COEFFS, SHIFT)
 
-#define ERR_DIFF_1(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CHANNEL, OUT_CHANNEL) \
+#define ERR_DIFF_1(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CH, OUT_CH) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = (FILTER_DIM-1)*(TILE_DIM) + MAX(3, (FILTER_DIM-1)+1);\
@@ -661,7 +661,7 @@
       LOGARR("after.shift", buffer, buffer_size)\
       if (i < tile_items) {\
         TYPE(input, IN_TYPE, 1);\
-        input  = read_channel_intel(IN_CHANNEL); \
+        input  = read_channel_intel(IN_CH); \
         buffer[buffer_size-1] = input;\
       } else {\
         buffer[buffer_size-1] = zero;\
@@ -691,7 +691,7 @@
         }\
       }\
       if (i >= buffer_ready_size) {\
-        write_channel_intel(OUT_CHANNEL, real_filter_out);\
+        write_channel_intel(OUT_CH, real_filter_out);\
       }\
     }\
   }\
@@ -700,7 +700,7 @@
 
 // One input 
 // Multiple outputs
-#define STENCIL_KERNEL_IOO_(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CHANNEL, OUT_CHANNEL0, OUT_CHANNEL1, FUNC0, FUNC1) \
+#define STENCIL_KERNEL_IOO_(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CH, OUT_CH0, OUT_CH1, FUNC0, FUNC1) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = (FILTER_DIM-1)*(TILE_DIM) + MAX(3*UNROLL, (FILTER_DIM-1)+UNROLL);\
@@ -730,7 +730,7 @@
       LOGARR("after.shift", buffer, buffer_size)\
       if (i < tile_items) {\
         TYPE(input, IN_TYPE, UNROLL);\
-        input  = read_channel_intel(IN_CHANNEL); \
+        input  = read_channel_intel(IN_CH); \
         _Pragma("unroll")                                             \
         for(int j =0 ;j < UNROLL;j++) {                               \
           buffer[buffer_size-1-j] = input[UNROLL - 1 - j];            \
@@ -766,15 +766,15 @@
         }\
       }\
       if (i >= buffer_ready_size) {\
-        write_channel_intel(OUT_CHANNEL0, real_filter_out[0]);\
-        write_channel_intel(OUT_CHANNEL1, real_filter_out[1]);\
+        write_channel_intel(OUT_CH0, real_filter_out[0]);\
+        write_channel_intel(OUT_CH1, real_filter_out[1]);\
       }\
     }\
   }\
   LOG("finished", #NAME);\
 } 
 
-#define STENCIL_KERNEL_IOO_1(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CHANNEL, OUT_CHANNEL0, OUT_CHANNEL1, FUNC0, FUNC1) \
+#define STENCIL_KERNEL_IOO_1(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CH, OUT_CH0, OUT_CH1, FUNC0, FUNC1) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = (FILTER_DIM-1)*(TILE_DIM) + MAX(3*1, (FILTER_DIM-1)+1);\
@@ -804,7 +804,7 @@
       LOGARR("after.shift", buffer, buffer_size)\
       if (i < tile_items) {\
         TYPE(input, IN_TYPE, 1);\
-        input  = read_channel_intel(IN_CHANNEL); \
+        input  = read_channel_intel(IN_CH); \
         buffer[buffer_size-1] = input;            \
       } else {                                                        \
         buffer[buffer_size-1] = zero;                               \
@@ -829,14 +829,14 @@
         }\
       }\
       if (i >= buffer_ready_size) {\
-        write_channel_intel(OUT_CHANNEL0, real_filter_out[0]);\
-        write_channel_intel(OUT_CHANNEL1, real_filter_out[1]);\
+        write_channel_intel(OUT_CH0, real_filter_out[0]);\
+        write_channel_intel(OUT_CH1, real_filter_out[1]);\
       }\
     }\
   }\
   LOG("finished", #NAME);\
 }
-#define STENCIL_KERNEL_IOO_32(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CHANNEL, OUT_CHANNEL0, OUT_CHANNEL1, FUNC0, FUNC1) \
+#define STENCIL_KERNEL_IOO_32(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CH, OUT_CH0, OUT_CH1, FUNC0, FUNC1) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = (FILTER_DIM-1)*(TILE_DIM) + MAX(3*UNROLL, (FILTER_DIM-1)+UNROLL);\
@@ -866,7 +866,7 @@
       LOGARR("after.shift", buffer, buffer_size)\
       if (i < tile_items) {\
         TYPE(input, IN_TYPE, UNROLL);\
-        input  = read_channel_intel(IN_CHANNEL); \
+        input  = read_channel_intel(IN_CH); \
         _Pragma("unroll")                                             \
         for(int j =0 ;j < 16;j++) {                                   \
           buffer[buffer_size-1-j] = input.hi[16 - 1 - j];             \
@@ -915,8 +915,8 @@
         }\
       }\
       if (i >= buffer_ready_size) {\
-        write_channel_intel(OUT_CHANNEL0, real_filter_out[0]);\
-        write_channel_intel(OUT_CHANNEL1, real_filter_out[1]);\
+        write_channel_intel(OUT_CH0, real_filter_out[0]);\
+        write_channel_intel(OUT_CH1, real_filter_out[1]);\
       }\
     }\
   }\
@@ -926,10 +926,10 @@
 #define STENCIL_KERNEL_IOO_4(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) STENCIL_KERNEL_IOO_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)
 #define STENCIL_KERNEL_IOO_8(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) STENCIL_KERNEL_IOO_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)
 #define STENCIL_KERNEL_IOO_16(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) STENCIL_KERNEL_IOO_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)
-#define STENCIL_KERNEL_IOO(NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL, COEFFS, SHIFT) \
- CAT2(STENCIL_KERNEL_IOO, SIMD_SIZE) (NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CHANNEL, OUT_CHANNEL, COEFFS, SHIFT)
+#define STENCIL_KERNEL_IOO(NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH, COEFFS, SHIFT) \
+ CAT2(STENCIL_KERNEL_IOO, SIMD_SIZE) (NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, FUNC, IN_CH, OUT_CH, COEFFS, SHIFT)
 
-#define STENCIL_KERNEL_IIO_(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CHANNEL0, IN_CHANNEL1, OUT_CHANNEL, FUNC0) \
+#define STENCIL_KERNEL_IIO_(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CH0, IN_CH1, OUT_CH, FUNC0) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = (FILTER_DIM-1)*(TILE_DIM) + MAX(3*UNROLL, (FILTER_DIM-1)+UNROLL);\
@@ -961,9 +961,9 @@
       LOGARR("after.shift", buffer, buffer_size)\
       if (i < tile_items) {\
         TYPE(input0, IN_TYPE, UNROLL);\
-        input0  = read_channel_intel(IN_CHANNEL0); \
+        input0  = read_channel_intel(IN_CH0); \
         TYPE(input1, IN_TYPE, UNROLL);\
-        input1  = read_channel_intel(IN_CHANNEL1); \
+        input1  = read_channel_intel(IN_CH1); \
         _Pragma("unroll") \
         for(int j =0 ;j < UNROLL;j++) {\
           buffer0[buffer_size-1-j] = input0[UNROLL - 1 - j];\
@@ -999,13 +999,13 @@
         }\
       }\
       if (i >= buffer_ready_size) {\
-        write_channel_intel(OUT_CHANNEL, real_filter_out);\
+        write_channel_intel(OUT_CH, real_filter_out);\
       }\
     }\
   }\
   LOG("finished", #NAME);\
 } 
-#define STENCIL_KERNEL_IIO_1(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CHANNEL0, IN_CHANNEL1, OUT_CHANNEL, FUNC0) \
+#define STENCIL_KERNEL_IIO_1(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CH0, IN_CH1, OUT_CH, FUNC0) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = (FILTER_DIM-1)*(TILE_DIM) + MAX(3*UNROLL, (FILTER_DIM-1)+UNROLL);\
@@ -1037,9 +1037,9 @@
       LOGARR("after.shift", buffer, buffer_size)\
       if (i < tile_items) {\
         TYPE(input0, IN_TYPE, 1);\
-        input0  = read_channel_intel(IN_CHANNEL0); \
+        input0  = read_channel_intel(IN_CH0); \
         TYPE(input1, IN_TYPE, 1);\
-        input1  = read_channel_intel(IN_CHANNEL1); \
+        input1  = read_channel_intel(IN_CH1); \
         buffer0[buffer_size-1] = input0;\
         buffer1[buffer_size-1] = input1;\
       } else {\
@@ -1063,7 +1063,7 @@
         }\
       }\
       if (i >= buffer_ready_size) {\
-        write_channel_intel(OUT_CHANNEL, real_filter_out);\
+        write_channel_intel(OUT_CH, real_filter_out);\
       }\
     }\
   }\
@@ -1073,7 +1073,7 @@
 #define STENCIL_KERNEL_IIO_4(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) STENCIL_KERNEL_IIO_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)
 #define STENCIL_KERNEL_IIO_8(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) STENCIL_KERNEL_IIO_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)
 #define STENCIL_KERNEL_IIO_16(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) STENCIL_KERNEL_IIO_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)
-#define STENCIL_KERNEL_IIO_32(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CHANNEL0, IN_CHANNEL1, OUT_CHANNEL, FUNC0) \
+#define STENCIL_KERNEL_IIO_32(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CH0, IN_CH1, OUT_CH, FUNC0) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = (FILTER_DIM-1)*(TILE_DIM) + MAX(3*UNROLL, (FILTER_DIM-1)+UNROLL);\
@@ -1105,9 +1105,9 @@
       LOGARR("after.shift", buffer, buffer_size)\
       if (i < tile_items) {\
         TYPE(input0, IN_TYPE, UNROLL);\
-        input0  = read_channel_intel(IN_CHANNEL0); \
+        input0  = read_channel_intel(IN_CH0); \
         TYPE(input1, IN_TYPE, UNROLL);\
-        input1  = read_channel_intel(IN_CHANNEL1); \
+        input1  = read_channel_intel(IN_CH1); \
         _Pragma("unroll") \
         for(int j =0 ;j < 16;j++) {\
           buffer0[buffer_size-1-j] = input0.hi[16 - 1 - j];\
@@ -1152,16 +1152,16 @@
         }\
       }\
       if (i >= buffer_ready_size) {\
-        write_channel_intel(OUT_CHANNEL, real_filter_out);\
+        write_channel_intel(OUT_CH, real_filter_out);\
       }\
     }\
   }\
   LOG("finished", #NAME);\
 } 
-#define STENCIL_KERNEL_IIO(NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CHANNEL0, IN_CHANNEL1, OUT_CHANNEL, FUNC0) \
- CAT2(STENCIL_KERNEL_IIO, SIMD_SIZE) (NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CHANNEL0, IN_CHANNEL1, OUT_CHANNEL, FUNC0)
+#define STENCIL_KERNEL_IIO(NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CH0, IN_CH1, OUT_CH, FUNC0) \
+ CAT2(STENCIL_KERNEL_IIO, SIMD_SIZE) (NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CH0, IN_CH1, OUT_CH, FUNC0)
 
-#define STENCIL_KERNEL_IIIO_(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CHANNEL0, IN_CHANNEL1, IN_CHANNEL2, OUT_CHANNEL, FUNC0) \
+#define STENCIL_KERNEL_IIIO_(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CH0, IN_CH1, IN_CH2, OUT_CH, FUNC0) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = (FILTER_DIM-1)*(TILE_DIM) + MAX(3*UNROLL, (FILTER_DIM-1)+UNROLL);\
@@ -1195,11 +1195,11 @@
       LOGARR("after.shift", buffer, buffer_size)\
       if (i < tile_items) {\
         TYPE(input0, IN_TYPE, UNROLL);\
-        input0  = read_channel_intel(IN_CHANNEL0); \
+        input0  = read_channel_intel(IN_CH0); \
         TYPE(input1, IN_TYPE, UNROLL);\
-        input1  = read_channel_intel(IN_CHANNEL1); \
+        input1  = read_channel_intel(IN_CH1); \
         TYPE(input2, IN_TYPE, UNROLL);\
-        input2  = read_channel_intel(IN_CHANNEL2); \
+        input2  = read_channel_intel(IN_CH2); \
         _Pragma("unroll") \
         for(int j =0 ;j < UNROLL;j++) {\
           buffer0[buffer_size-1-j] = input0[UNROLL - 1 - j];\
@@ -1237,13 +1237,13 @@
         }\
       }\
       if (i >= buffer_ready_size) {\
-        write_channel_intel(OUT_CHANNEL, real_filter_out);\
+        write_channel_intel(OUT_CH, real_filter_out);\
       }\
     }\
   }\
   LOG("finished", #NAME);\
 } 
-#define STENCIL_KERNEL_IIIO_1(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CHANNEL0, IN_CHANNEL1, IN_CHANNEL2, OUT_CHANNEL, FUNC0) \
+#define STENCIL_KERNEL_IIIO_1(NAME, TILE_DIM, UNROLL, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CH0, IN_CH1, IN_CH2, OUT_CH, FUNC0) \
  __kernel void NAME(uint img_rows, uint img_cols) {\
   const int pad_size = (FILTER_DIM-1)/2;\
   const int buffer_size = (FILTER_DIM-1)*(TILE_DIM) + MAX(3*UNROLL, (FILTER_DIM-1)+UNROLL);\
@@ -1277,11 +1277,11 @@
       LOGARR("after.shift", buffer, buffer_size)\
       if (i < tile_items) {\
         TYPE(input0, IN_TYPE, 1);\
-        input0  = read_channel_intel(IN_CHANNEL0); \
+        input0  = read_channel_intel(IN_CH0); \
         TYPE(input1, IN_TYPE, 1);\
-        input1  = read_channel_intel(IN_CHANNEL1); \
+        input1  = read_channel_intel(IN_CH1); \
         TYPE(input2, IN_TYPE, 1);\
-        input2  = read_channel_intel(IN_CHANNEL2); \
+        input2  = read_channel_intel(IN_CH2); \
         buffer0[buffer_size-1] = input0;\
         buffer1[buffer_size-1] = input1;\
         buffer2[buffer_size-1] = input2;\
@@ -1307,7 +1307,7 @@
         }\
       }\
       if (i >= buffer_ready_size) {\
-        write_channel_intel(OUT_CHANNEL, real_filter_out);\
+        write_channel_intel(OUT_CH, real_filter_out);\
       }\
     }\
   }\
@@ -1318,6 +1318,6 @@
 #define STENCIL_KERNEL_IIIO_8(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) STENCIL_KERNEL_IIIO_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)
 #define STENCIL_KERNEL_IIIO_16(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) STENCIL_KERNEL_IIIO_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)
 #define STENCIL_KERNEL_IIIO_32(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) STENCIL_KERNEL_IIIO_(A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)
-#define STENCIL_KERNEL_IIIO(NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CHANNEL0, IN_CHANNEL1, IN_CHANNEL2,OUT_CHANNEL, FUNC0) \
- CAT2(STENCIL_KERNEL_IIIO, SIMD_SIZE) (NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CHANNEL0, IN_CHANNEL1, IN_CHANNEL2, OUT_CHANNEL, FUNC0)
+#define STENCIL_KERNEL_IIIO(NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CH0, IN_CH1, IN_CH2,OUT_CH, FUNC0) \
+ CAT2(STENCIL_KERNEL_IIIO, SIMD_SIZE) (NAME, TILE_DIM, SIMD_SIZE, FILTER_DIM, IN_TYPE, OUT_TYPE, IN_CH0, IN_CH1, IN_CH2, OUT_CH, FUNC0)
 

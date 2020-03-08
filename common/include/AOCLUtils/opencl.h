@@ -32,7 +32,7 @@
 #include "CL/opencl.h"
 
 // This is assumed to be externally provided by the application.
-extern void cleanup();
+extern void Cleanup();
 
 namespace aocl_utils {
 
@@ -71,14 +71,14 @@ cl_device_id *getDevices(cl_platform_id pid, cl_device_type dev_type, cl_uint *n
 // Create a OpenCL program from a binary file.
 // The program is created for all given devices associated with the context. The same
 // binary is used for all devices.
-cl_program createProgramFromBinary(cl_context context, const char *binary_file_name, const cl_device_id *devices, unsigned num_devices);
+cl_program CreateProgramFromBinary(cl_context context, const char *binary_file_name, const cl_device_id *devices, unsigned num_devices);
 
 // Load binary file.
 // Return value must be freed with delete[].
-unsigned char *loadBinaryFile(const char *file_name, size_t *size);
+unsigned char *LoadBinaryFile(const char *file_name, size_t *size);
 
 // Checks if a file exists.
-bool fileExists(const char *file_name);
+bool FileExists(const char *file_name);
 
 // Returns the path to the AOCX file to use for the given device.
 // This is special handling for examples for the Intel(R) FPGA SDK for OpenCL(TM).

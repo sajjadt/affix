@@ -189,7 +189,7 @@ REPLICATE_AUTO(kernel_replicate_10a, short, SIMD_SIZE, 2, ch_sobel_yy_a, ch_sobe
 PIXELWISE_IIO(kernel_trace_1a, SIMD_SIZE, short, short, add_short, ch_sobel_xx_repa[0], ch_sobel_yy_repa[0], ch_tracea)
 PIXELWISE_IIO(kernel_mr_1a, SIMD_SIZE, short, short, pixelwise_mul_short, ch_sobel_xx_repa[1], ch_sobel_yy_repa[1], ch_add_t_a[0])
 PIXELWISE_IIO(kernel_mr_2a, SIMD_SIZE, short, short, pixelwise_mul_short, ch_sobel_yx_a, ch_sobel_xy_a, ch_add_t_a[1])
-PIXELWISE_IIO(kernel_sr_1a, SIMD_SIZE, short, short, sub_short, ch_add_t_a[0], ch_add_t_a[1], ch_deta)
+FileExists(kernel_sr_1a, SIMD_SIZE, short, short, sub_short, ch_add_t_a[0], ch_add_t_a[1], ch_deta)
 CHANNEL(ch_out_1, uchar , SIMD_SIZE, DEFAULT_CHANNEL_DEPTH)
 __kernel void kernel_fixmea(uint items) {
   TYPE(in_data, uchar, SIMD_SIZE);

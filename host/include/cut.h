@@ -5,7 +5,8 @@
 
 #include <CL/cl2.hpp>
 
-#include "image.h"
+// #include "image.h"
+#include <opencv2/opencv.hpp>
 #include <vector>
 
 struct CutDataSize {
@@ -17,36 +18,33 @@ struct CutDataSize {
   int no_elements;
   int pixel_size;
 
-  int total() {
+  int Total() {
     return no_elements*pixel_size;
   }
 };
 
 // Collection of cut's input/output mats 
 class CutData {
-public:
+ public:
   explicit CutData(){}
   CutData(const CutData& c): mat(c.mat) {};
   CutData& operator=(const CutData& c) = delete;
-  cv::Mat mat; //one mat for now
-  CutDataSize size;
-  int total() {
+  int Total() {
     return mat.total() ; // TODO more than one mat
   }
   int total_bytes() {
     return mat.total() * mat.elemSize() ; // TODO more than one mat
   }
+  cv::Mat mat; //one mat for now
+  CutDataSize size;
 };
 
-class InputCutData: public CutData {
-};
+class InputCutData: public CutData {};
 
-class OutputCutData: public CutData {
-};
-
+class OutputCutData: public CutData {};
 
 class GraphCut {
-public:
+ public:
   // I/O transfer size in bytes
   CutDataSize input_size;
   CutDataSize output_size;
@@ -56,14 +54,7 @@ public:
 };
 
 class ExecutionGraph {
-public:
+ public:
   // List of graph cuts
   std::vector<GraphCut> cuts;
-};
-
-class Tile{
-  public:
-  unsigned char* data;
-  int rows, cols;
-  int step;
 };

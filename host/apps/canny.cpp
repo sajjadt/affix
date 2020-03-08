@@ -1,5 +1,5 @@
 #include "application.h"
-#include "cl_util.h"
+#include "opencl_util.h"
 
 #include <string>
 #include <iostream>
@@ -12,19 +12,18 @@
 class Canny: public Application {
   public:
     Canny(int);
-    //std::vector<std::future<void>> tile_process(int, int, Tile, std::unique_ptr<Task::Scheduler>&) override;
-    GraphCut get_execution_cut(const cl::Program&, 
+    GraphCut GetExecutionCut(const cl::Program&, 
     const cl::Pipe&, const cl::Pipe&, int, int) override;
-    int get_cut_input_total(int) override;
-    int get_cut_output_total(int) override;
-    bool need_reordering(int) override;
+    int GetCutInputTotal(int) override;
+    int GetCutOutputTotal(int) override;
+    bool NeedReordering(int) override;
 
-    CutData get_input_data(int) override;
-    CutData get_output_data(int) override;
-    void set_cut_data_info(const cv::Mat&) override;
+    CutData GetInputData(int) override;
+    CutData GetOutputData(int) override;
+    void SetCutDataInfo(const cv::Mat&) override;
 
-    void pre_process_cut(int, int) override;
-    void post_process_cut(int, int) override;
+    void PreProcessCut(int, int) override;
+    void PostProcessCut(int, int) override;
 
   private:
     int rows, cols;
@@ -33,7 +32,7 @@ class Canny: public Application {
 Canny::Canny(int seq_size) : Application("app-canny", 1, seq_size, Color::GRAYSCALE), rows(0), cols(0)
 {}
 
-void Canny::set_cut_data_info(const cv::Mat& in_img) {
+void Canny::SetCutDataInfo(const cv::Mat& in_img) {
 
   cut_inputs.clear();
   cut_outputs.clear();
@@ -48,52 +47,52 @@ void Canny::set_cut_data_info(const cv::Mat& in_img) {
   cut_outputs.push_back(cut_out);
 }
 
-CutData Canny::get_input_data(int i) {
+CutData Canny::GetInputData(int i) {
   // Return input image for the first cut
   std::cout<<"get in data "<<i << std::endl;
   CutData cut = cut_inputs.at(i);
-  std::cout<< cut.total() << std::endl;
+  std::cout<< cut.Total() << std::endl;
   return cut;
 }
 
-CutData Canny::get_output_data(int i) {
+CutData Canny::GetOutputData(int i) {
   // Allocate same size as the input image
   return cut_outputs.at(i);
 }
 
 
-void Canny::pre_process_cut(int seq_no, int cut_no) {
+void Canny::PreProcessCut(int seq_no, int cut_no) {
   assert(cut_no == 0);
   
-  if (cut_inputs.at(0).mat.cols != Params::get_tile_cols())
-    do_reorder(cut_inputs.at(0).mat, Params::get_tile_cols(), true).copyTo(cut_inputs.at(0).mat);
+  if (cut_inputs.at(0).mat.cols != Params::GetTileCols())
+    do_reorder(cut_inputs.at(0).mat, Params::GetTileCols(), true).copyTo(cut_inputs.at(0).mat);
 
   cv::imwrite("in/frame_in" + std::to_string(seq_no) + ".jpg", cut_outputs.at(0).mat);
   
 }
 
-void Canny::post_process_cut(int seq_no, int cut_no) {
+void Canny::PostProcessCut(int seq_no, int cut_no) {
   assert (cut_no == 0);
     
-  if (cut_outputs.at(0).mat.cols != Params::get_tile_cols())
-    cut_outputs.at(0).mat = do_reorder(cut_outputs.at(0).mat, Params::get_tile_cols(), false);
+  if (cut_outputs.at(0).mat.cols != Params::GetTileCols())
+    cut_outputs.at(0).mat = do_reorder(cut_outputs.at(0).mat, Params::GetTileCols(), false);
 
   cv::imwrite("out/canny_out" + std::to_string(seq_no) + ".jpg", cut_outputs[0].mat);
 }
 
-bool Canny::need_reordering(int cut_index) {
+bool Canny::NeedReordering(int cut_index) {
   return true;
 }
 
-int Canny::get_cut_input_total(int index) {
-  return cut_inputs[index].total();
+int Canny::GetCutInputTotal(int index) {
+  return cut_inputs[index].Total();
 }
 
-int Canny::get_cut_output_total(int index) {
-  return cut_outputs[index].total();
+int Canny::GetCutOutputTotal(int index) {
+  return cut_outputs[index].Total();
 }
 
-GraphCut Canny::get_execution_cut(const cl::Program& program,
+GraphCut Canny::GetExecutionCut(const cl::Program& program,
                                   const cl::Pipe& read_pipe,
                                   const cl::Pipe& write_pipe, 
                                   int seq_no, int cut_id) {
@@ -103,7 +102,7 @@ GraphCut Canny::get_execution_cut(const cl::Program& program,
   cl_int status;
   GraphCut cut;
 
-  cl_uint items = get_cut_input_total(cut_id);
+  cl_uint items = GetCutInputTotal(cut_id);
   cl_uint rows = cut_inputs[cut_id].mat.rows;
   cl_uint cols = cut_inputs[cut_id].mat.cols;
 
@@ -143,6 +142,6 @@ GraphCut Canny::get_execution_cut(const cl::Program& program,
   return cut;
 }
 
-Application* get_app(CLManager* _) {
+Application* GetAppliaction(OpenCLManager* _) {
   return new Canny(1);
 }

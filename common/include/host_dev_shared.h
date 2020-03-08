@@ -1,5 +1,4 @@
-#ifndef HOST_DEV_SHARED
-#define HOST_DEV_SHARED
+#pragma once
 
 struct uchar32 {
 #if defined(INTELFPGA_CL)
@@ -20,5 +19,3 @@ struct short32 {
 struct Matrix3x3f {
   float m[3][3];
 };
-
-#endif

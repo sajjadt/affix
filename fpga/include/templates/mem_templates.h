@@ -19,7 +19,7 @@
 #define LOAD_KERNEL(NAME, UNROLL, DATA_TYPE, OUT_CHANNEL) __kernel \
 void NAME(                                                         \
   uint items,                                                      \
-  global const TTYPE(DATA_TYPE, UNROLL) * restrict mem) {                 \
+  global const TTYPE(DATA_TYPE, UNROLL) * restrict mem) {          \
   int counter = 0;                                                 \
   int counter_x = 0;                                               \
   LOG("starting", #NAME)                                           \
@@ -136,7 +136,7 @@ void NAME(                                                         \
 void NAME() {                                                                                  \
   local TTYPE(IN_TYPE,SIMD_SIZE) buffer[BUFFER_SIZE];                                          \
   TYPE(input, IN_TYPE, SIMD_SIZE);                                                             \
-  int counter_read = 0, counter_write=0;;                                                      \
+  int counter_read = 0, counter_write=0;                                                       \
   LOG("starting", #NAME)                                                                       \
   LOGP(#NAME ".items", items)                                                                  \
   while (counter_read < items) {                                                               \

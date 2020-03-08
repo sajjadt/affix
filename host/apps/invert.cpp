@@ -1,5 +1,5 @@
 #include "application.h"
-#include "cl_util.h"
+#include "opencl_util.h"
 #include <string>
 #include <iostream>
 #include <cassert>
@@ -7,31 +7,27 @@
 class Invert: public Application {
   public:
     Invert(int);
-    //std::vector<std::future<void>> tile_process(int, int, Tile, std::unique_ptr<Task::Scheduler>&) override;
-    GraphCut get_execution_cut(const cl::Program&, const cl::Pipe&, const cl::Pipe&, int, int) override;
-    int get_cut_input_total(int) override;
-    int get_cut_output_total(int) override;
-    bool need_reordering(int) override;
+    GraphCut GetExecutionCut(const cl::Program&, const cl::Pipe&, const cl::Pipe&, int, int) override;
+    int GetCutInputTotal(int) override;
+    int GetCutOutputTotal(int) override;
+    bool NeedReordering(int) override;
 
-    CutData get_input_data(int) override;
-    CutData get_output_data(int) override;
-    void set_cut_data_info(const cv::Mat&) override;
+    CutData GetInputData(int) override;
+    CutData GetOutputData(int) override;
+    void SetCutDataInfo(const cv::Mat&) override;
 
     void set_global_buffers();
 
-    void pre_process_cut(int, int) override;
-    void post_process_cut(int, int) override;
+    void PreProcessCut(int, int) override;
+    void PostProcessCut(int, int) override;
   private:
     int rows, cols;
 };
 
 Invert::Invert(int seq_size) :
- Application("invert", 1, seq_size, Color::GRAYSCALE), 
- rows(0), cols(0)
-{
-}
+ Application("invert", 1, seq_size, Color::GRAYSCALE), rows(0), cols(0) {}
 
-void Invert::set_cut_data_info(const cv::Mat& in_img) {
+void Invert::SetCutDataInfo(const cv::Mat& in_img) {
   cut_inputs.clear();
   cut_outputs.clear();
   
@@ -44,25 +40,25 @@ void Invert::set_cut_data_info(const cv::Mat& in_img) {
   cut_outputs.push_back(cut_out);
 }
 
-CutData Invert::get_input_data(int i) {
+CutData Invert::GetInputData(int i) {
   // Return input image for the first cut
   std::cout<<"get in data "<<i << std::endl;
   CutData cut = cut_inputs.at(i);
-  std::cout<< cut.total() << std::endl;
+  std::cout<< cut.Total() << std::endl;
   return cut;
 }
 
-CutData Invert::get_output_data(int i) {
+CutData Invert::GetOutputData(int i) {
   // Allocate same size as the input image
   return cut_outputs.at(i);
 }
 
-void Invert::pre_process_cut(int seq_no, int cut_no) {
+void Invert::PreProcessCut(int seq_no, int cut_no) {
   assert(cut_no == 0);
   std::cout<<"pre procss"<<std::endl;
 }
 
-void Invert::post_process_cut(int seq_no, int cut_no) {
+void Invert::PostProcessCut(int seq_no, int cut_no) {
   assert(cut_no == 0);
   std::cout<<"post procss"<<std::endl;
 
@@ -71,18 +67,18 @@ void Invert::post_process_cut(int seq_no, int cut_no) {
   
 }
 
-bool Invert::need_reordering(int cut_index) {
+bool Invert::NeedReordering(int cut_index) {
   return false;
 }
 
-int Invert::get_cut_input_total(int index) {
-  return cut_inputs[index].total();
+int Invert::GetCutInputTotal(int index) {
+  return cut_inputs[index].Total();
 }
-int Invert::get_cut_output_total(int index) {
-  return cut_outputs[index].total();
+int Invert::GetCutOutputTotal(int index) {
+  return cut_outputs[index].Total();
 }
 
-GraphCut Invert::get_execution_cut(const cl::Program& program,
+GraphCut Invert::GetExecutionCut(const cl::Program& program,
                                   const cl::Pipe& read_pipe,
                                   const cl::Pipe& write_pipe, 
                                   int seq_no, int cut_id) {
@@ -91,19 +87,19 @@ GraphCut Invert::get_execution_cut(const cl::Program& program,
 
   cl_int status;
   GraphCut cut;
-  cl_ulong a = get_cut_input_total(0);
+  cl_ulong items = GetCutInputTotal(0);
 
   auto kernel_info = {
     std::make_pair<std::string, ArgVector>("kernel_source", {
       std::make_pair(sizeof(cl_mem), (void *)&write_pipe()),
-      std::make_pair(sizeof(cl_uint), (void *)&a)
+      std::make_pair(sizeof(cl_uint), (void *)&items)
     }), 
     std::make_pair<std::string, ArgVector>("kernel_invert", {
-      std::make_pair(sizeof(cl_uint), (void *)&a)
+      std::make_pair(sizeof(cl_uint), (void *)&items)
     }),
     std::make_pair<std::string, ArgVector>("kernel_sink", {
       std::make_pair(sizeof(cl_mem), (void *)&read_pipe()),
-      std::make_pair(sizeof(cl_uint), (void *)&a)
+      std::make_pair(sizeof(cl_uint), (void *)&items)
     })
   };
   
@@ -111,6 +107,6 @@ GraphCut Invert::get_execution_cut(const cl::Program& program,
   return cut;
 }
 
-Application* get_app(CLManager* _) {
+Application* GetAppliaction(OpenCLManager* _) {
   return new Invert(1);
 }

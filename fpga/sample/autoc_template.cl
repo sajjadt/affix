@@ -5,6 +5,7 @@
 #ifndef SIMD_SIZE
 #define SIMD_SIZE 8
 #endif
+
 #define HISTOGRAM 256
 
 #include "common.h"
@@ -26,10 +27,10 @@ CHANNEL(ch_v_out, uchar, SIMD_SIZE, DEFAULT_CHANNEL_DEPTH)
 CHANNEL(ch_y_final, uchar, SIMD_SIZE, DEFAULT_CHANNEL_DEPTH)
 CHANNEL(ch_out, uint, SIMD_SIZE, DEFAULT_CHANNEL_DEPTH)
 
-// Kernels
+// Partitions
+
 // Partition 0
 SRC_KERNEL(uint, SIMD_SIZE, ch_in)
-//PIXELWISE_IOOO(kernel_rgbx_to_yuv4, SIMD_SIZE, uint, uchar, rgb2yuv_iooo, ch_in, ch_y_temp, ch_u_in, ch_v_in)
 PIXELWISE_IOOO(kernel_rgbx_to_yuv4, SIMD_SIZE, uint, uchar, rgb2yuv_float, ch_in, ch_y_temp, ch_u_in, ch_v_in)
 
 REPLICATE(kernel_replicate_y, uchar, SIMD_SIZE, 2, ch_y_temp, ch_y_in)
@@ -46,7 +47,6 @@ LOAD_KERNEL(kernel_load_u, SIMD_SIZE, uchar, ch_u_out)
 LOAD_KERNEL(kernel_load_v, SIMD_SIZE, uchar, ch_v_out)
 
 // Extension
-
 #if SIMD_SIZE > 1 
 __kernel void kernel_equalize(uint items) {
   int counter;

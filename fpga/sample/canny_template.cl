@@ -37,6 +37,6 @@ REPLICATE_AUTO(kernel_replicate_y, short, SIMD_SIZE, 2, ch_sobel_y, ch_sobel_y_r
 PIXELWISE_IIO(kernel_magnitude, SIMD_SIZE, short, short, magnitude_l2, ch_sobel_x_rep[1], ch_sobel_y_rep[1], ch_mag)
 PIXELWISE_IIO(kernel_phase, SIMD_SIZE, short, short, phase_region, ch_sobel_x_rep[0], ch_sobel_y_rep[0], ch_phase)
 STENCIL_KERNEL_IIO(kernel_nonmax_suppression, TILE_DIM, SIMD_SIZE, 3, short, short, ch_phase, ch_mag, ch_supp, oriented_suppression)
-//TODO: pass parameters through an struct
+//TODO: pass parameters through a struct
 PIXELWISE_IO(kernel_threshold, SIMD_SIZE, short, uchar, threshold, ch_supp, ch_out)
 SINK_KERNEL(uchar, SIMD_SIZE, ch_out)

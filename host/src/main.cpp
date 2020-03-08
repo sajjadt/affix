@@ -6,13 +6,11 @@
 
 #include <iostream>
 
-
 #include "common.h"
-#include "app_manager.h"
-#include "cl_manager.h"
-#include "clio_manager.h"
+#include "application_manager.h"
+#include "opencl_manager.h"
+#include "opencl_io_manager.h"
 #include "cut.h"
-#include "perf.h"
 #include "application.h"
 #include "params.h"
 
@@ -25,8 +23,6 @@
 #define MB (1024*KB)
 #define GB (1024*MB)
 #define packet_sz 32
-
-// Functions accessed through ICD
 
 // Set to false to temporarily disable printing of error notification callbacks
 bool g_enable_notifications = false;
@@ -42,18 +38,16 @@ void ocl_notify(
 }
 
 std::string Params::binary_file;
-std::string Params::app_path;
+std::string Params::application_path;
 std::string Params::input_file;
 int Params::tile_cols;
 bool Params::_verbose;
 bool Params::_test_data;
-int Params::_seq_size;
 
 void dump_error(const char *str, cl_int status) {
   printf("%s\n", str);
   printf("Error code: %d\n", status);
 }
-
 
 int main(int argc, char *argv[]) {
   
@@ -62,20 +56,16 @@ int main(int argc, char *argv[]) {
   
   args::ArgumentParser parser("Host progam for FPGA computer vision algorithm acceleration using Intel OpenCL SDK.");
   args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
-  args::ValueFlag<std::string> binary_file(parser, "binary", "FPGA .aocx binary file", {'b'});
-  args::ValueFlag<std::string> app_path(parser, "app", "Application to run (path to dll file): \n ", {'a'});
-  args::ValueFlag<std::string> input_file(parser, "input", "Input video file", {'i'});
+  args::ValueFlag<std::string> binary_file(parser, "binary", "FPGA binary file (path to .aocx file)", {'b'});
+  args::ValueFlag<std::string> application_path(parser, "app", "Application to run (path to .so file): \n ", {'a'});
+  args::ValueFlag<std::string> input_file(parser, "input", "Input file to stream", {'i'});
   args::ValueFlag<int> tile_cols(parser, "tile_cols", "Input tile dimension", {'t'});
-  args::ValueFlag<int> seq_size(parser, "seq_size", "Number of frames in input sequence", {'n'});
 
-  args::Group group(parser, "This group is all exclusive:", args::Group::Validators::DontCare);
-  args::Flag verbose(group, "verbose", "Verbose mode", {'v'});
-  args::Flag emulator(group, "emulator", "Run in emulator", {'e'});
-  args::Flag dump_perf(group, "perf", "Dump perf stats", {'p'});
+  args::Flag verbose(parser, "verbose", "Verbose mode", {'v'});
+  args::Flag emulator(parser, "emulator", "Run in emulator", {'e'});
 
   cv::VideoCapture cap;
 
-  
   try {
     parser.ParseCLI(argc, argv);
   } catch (args::Help) {
@@ -92,12 +82,11 @@ int main(int argc, char *argv[]) {
   }
 
   try {
-    if (binary_file && app_path) {;
-      Params::set(args::get(binary_file),
-                  args::get(app_path),
+    if (binary_file && application_path) {;
+      Params::Set(args::get(binary_file),
+                  args::get(application_path),
                   input_file? args::get(input_file): std::string(),
                   tile_cols? args::get(tile_cols) : 128,
-                  seq_size? args::get(seq_size) : INT_MAX,
                   verbose);
     } else {
       std::cout << parser;
@@ -116,24 +105,23 @@ int main(int argc, char *argv[]) {
   }
 
   std::cout<<"Initializing OpenCL" << std::endl;
-  CLManager cl_manager;
-  CLIOManager clio_manager;
-  cl_manager.init_cl(Params::get_binary_file());
-  if (Params::verbose())
-    cl_manager.get_device_info();
-  clio_manager.init(cl_manager.context);
+  OpenCLManager cl_manager;
+  OpenCLIOManager clio_manager;
+  cl_manager.Init(Params::GetBinaryFile());
+  if (Params::Verbose())
+    cl_manager.GetDeviceInfo();
+  clio_manager.Init(cl_manager.context);
 
   // Program the board with a binary that supports the entire program
   // No PR at this point
-  if (Params::verbose())
+  if (Params::Verbose())
     std::cout<<"Programming device"<<std::endl;
-  cl_manager.program_board(0);
+  cl_manager.ConfigureFPGA(0);
   
   // App manager
-  ApplicationManager app_manager(Params::get_app_path(), 
+  ApplicationManager application_manager(Params::GetApplicationPath(), 
                                 num_workers, 
-                                num_threads, 
-                                Params::seq_size(),
+                                num_threads,
                                 &cl_manager);
 
   // I/O device
@@ -146,42 +134,31 @@ int main(int argc, char *argv[]) {
   int format ;
   std::cout<<"loaded media:" << args::get(input_file) <<", frames:" << no_frames << ", FPS:" << fps << ", Dim:" << frame_width << "," << frame_height << std::endl;
  
-  Application* app = app_manager.get_app();
+  Application* app = application_manager.GetAppliaction();
   cv::Mat mat, dmat;
   
-
   GraphCut cut[10];  //TODO: fix
    
-
-  for(int seq =0; seq  < std::min(Params::seq_size(), no_frames);  seq++) {
-    printf ("Processing frame %d \n", seq);
-  
-    // Not necessarily
-    cv::waitKey(30);
+  for(int seq =0; seq  < no_frames;  seq++) {
     cap >> mat;
     // Mat is a BGR image
     assert(mat.channels() == 3);
 
     // if the app requires Grayscale images
-    if (app->get_color() == Color::GRAYSCALE)
+    if (app->GetColor() == Color::GRAYSCALE)
       cv::cvtColor(mat, dmat, cv::COLOR_BGR2GRAY);
-    else if (app->get_color() == Color::RGBX) {
+    else if (app->GetColor() == Color::RGBX)
       cv::cvtColor(mat, dmat, cv::COLOR_BGR2RGBA);
-      std::cout<<"Converted to RGBA"<<std::endl;
-    } else {
+    else
       throw std::runtime_error("Unexpected color format");
-    }
 
-    app->set_cut_data_info(dmat);
-    cv::imwrite("in/frame_in_" + std::to_string(seq) + ".jpg", mat);
+    app->SetCutDataInfo(dmat);
       
     // Process cuts
-    // GraphCut cut;
-    for(int i =0; i < app->get_cuts_number(); i++) {
+    for(int i =0; i < app->GetCutsNumber(); i++) {
       // Reset pipes for later cuts
-
       if (seq == 0){
-        cut[i] = app->get_execution_cut(cl_manager.program, 
+        cut[i] = app->GetExecutionCut(cl_manager.program, 
           clio_manager.read_pipe, 
           clio_manager.write_pipe, 
           0, i);
@@ -189,36 +166,29 @@ int main(int argc, char *argv[]) {
 
       // Allocate/prepare input/output buffers
       // Can come from input file or previous cut execution
-      CutData cut_in = app->get_input_data(i);
-      CutData cut_out = app->get_output_data(i);
+      CutData cut_in = app->GetInputData(i);
+      CutData cut_out = app->GetOutputData(i);
 
       // Reording using CPU
-      app->pre_process_cut(seq, i);
+      app->PreProcessCut(seq, i);
 
       int in_size = cut_in.total_bytes();
       int out_size = cut_out.total_bytes();
-      
-      printf("insize = %d bytes\n", in_size);
-      printf("outsize = %d bytes\n", out_size); 
-
-      cl_manager.enqueue_cut(cut[i]);
+ 
+      cl_manager.EnqueueCut(cut[i]);
       
       printf ("Beginning to push and pull data\n");
-      clio_manager.overlapped_io(cut_in.mat.data, cut_out.mat.data, in_size, out_size);
+      clio_manager.OverlappedIO(cut_in.mat.data, cut_out.mat.data, in_size, out_size);
 
-      app->post_process_cut(seq, i);
+      app->PostProcessCut(seq, i);
 
       std::cout<<"Waiting for all queues to finish"<<std::endl;
-      cl_manager.wait_finish(cut[i].kernels.size());
+      cl_manager.WaitUntilFinished(cut[i].kernels.size());
     }
   }
 
   //clio_manager.release();  
-  cl_manager.cleanup();
+  cl_manager.Cleanup();
 
-  if(dump_perf)
-    Perf::dump_events();
-
-  //cv::waitKey(0);
   return 0;
 }

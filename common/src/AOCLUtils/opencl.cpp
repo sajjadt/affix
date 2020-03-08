@@ -243,7 +243,7 @@ void _checkError(int line,
     va_end(vl);
 
     // Cleanup and bail.
-    //cleanup();
+    //Cleanup();
     exit(error);
   }
 }
@@ -363,16 +363,16 @@ cl_device_id *getDevices(cl_platform_id pid, cl_device_type dev_type, cl_uint *n
 }
 
 // Create a program for all devices associated with the context.
-cl_program createProgramFromBinary(cl_context context, const char *binary_file_name, const cl_device_id *devices, unsigned num_devices) {
+cl_program CreateProgramFromBinary(cl_context context, const char *binary_file_name, const cl_device_id *devices, unsigned num_devices) {
   // Early exit for potentially the most common way to fail: AOCX does not exist.
-  if(!fileExists(binary_file_name)) {
+  if(!FileExists(binary_file_name)) {
     printf("AOCX file '%s' does not exist.\n", binary_file_name);
     checkError(CL_INVALID_PROGRAM, "Failed to load binary file");
   }
 
   // Load the binary.
   size_t binary_size;
-  scoped_array<unsigned char> binary(loadBinaryFile(binary_file_name, &binary_size));
+  scoped_array<unsigned char> binary(LoadBinaryFile(binary_file_name, &binary_size));
   if(binary == NULL) {
     checkError(CL_INVALID_PROGRAM, "Failed to load binary file");
   }
@@ -398,7 +398,7 @@ cl_program createProgramFromBinary(cl_context context, const char *binary_file_n
 }
 
 // Loads a file in binary form.
-unsigned char *loadBinaryFile(const char *file_name, size_t *size) {
+unsigned char *LoadBinaryFile(const char *file_name, size_t *size) {
   // Open the File
   FILE* fp;
 #ifdef _WIN32
@@ -432,7 +432,7 @@ unsigned char *loadBinaryFile(const char *file_name, size_t *size) {
   return binary;
 }
 
-bool fileExists(const char *file_name) {
+bool FileExists(const char *file_name) {
 #ifdef _WIN32 // Windows
   DWORD attrib = GetFileAttributesA(file_name);
   return (attrib != INVALID_FILE_ATTRIBUTES && !(attrib & FILE_ATTRIBUTE_DIRECTORY));
@@ -444,7 +444,7 @@ bool fileExists(const char *file_name) {
 std::string getBoardBinaryFile(const char *prefix, cl_device_id device) {
   // First check if <prefix>.aocx exists. Use it if it does.
   std::string file_name = std::string(prefix) + ".aocx";
-  if(fileExists(file_name.c_str())) {
+  if(FileExists(file_name.c_str())) {
     return file_name;
   }
 
@@ -460,7 +460,7 @@ std::string getBoardBinaryFile(const char *prefix, cl_device_id device) {
 
     // Look for a AOCX with the name <prefix>_<board_name>_<version>.aocx.
     file_name = std::string(prefix) + "_" + board_name + "_" + VERSION_STR + ".aocx";
-    if(fileExists(file_name.c_str())) {
+    if(FileExists(file_name.c_str())) {
       return file_name;
     }
   }

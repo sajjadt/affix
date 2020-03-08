@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cl_manager.h"
+#include "opencl_manager.h"
 #include "common.h"
 #include <vector>
 

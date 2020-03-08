@@ -1,5 +1,5 @@
 #include "application.h"
-#include "cl_util.h"
+#include "opencl_util.h"
 
 #include <string>
 #include <iostream>
@@ -8,20 +8,19 @@
 class ColorConvert: public Application {
   public:
     ColorConvert(int);
-    //std::vector<std::future<void>> tile_process(int, int, Tile, std::unique_ptr<Task::Scheduler>&) override;
-    GraphCut get_execution_cut(const cl::Program&, const cl::Pipe&, const cl::Pipe&, int, int) override;
-    int get_cut_input_total(int) override;
-    int get_cut_output_total(int) override;
-    bool need_reordering(int) override;
+    GraphCut GetExecutionCut(const cl::Program&, const cl::Pipe&, const cl::Pipe&, int, int) override;
+    int GetCutInputTotal(int) override;
+    int GetCutOutputTotal(int) override;
+    bool NeedReordering(int) override;
 
-    CutData get_input_data(int) override;
-    CutData get_output_data(int) override;
-    void set_cut_data_info(const cv::Mat&) override;
+    CutData GetInputData(int) override;
+    CutData GetOutputData(int) override;
+    void SetCutDataInfo(const cv::Mat&) override;
 
     void set_global_buffers();
 
-    void pre_process_cut(int, int) override;
-    void post_process_cut(int, int) override;
+    void PreProcessCut(int, int) override;
+    void PostProcessCut(int, int) override;
   private:
     int rows, cols;
 };
@@ -32,7 +31,7 @@ ColorConvert::ColorConvert(int seq_size) :
 {
 }
 
-void ColorConvert::set_cut_data_info(const cv::Mat& in_img) {
+void ColorConvert::SetCutDataInfo(const cv::Mat& in_img) {
   cut_inputs.clear();
   cut_outputs.clear();
 
@@ -45,22 +44,22 @@ void ColorConvert::set_cut_data_info(const cv::Mat& in_img) {
   cut_outputs.push_back(cut_out);
 }
 
-CutData ColorConvert::get_input_data(int i) {
+CutData ColorConvert::GetInputData(int i) {
   std::cout<<"get in data "<<i << std::endl;
   CutData cut = cut_inputs.at(i);
-  std::cout<< cut.total() << std::endl;
+  std::cout<< cut.Total() << std::endl;
   return cut;
 }
 
-CutData ColorConvert::get_output_data(int i) {
+CutData ColorConvert::GetOutputData(int i) {
   return cut_outputs.at(i);
 }
 
-void ColorConvert::pre_process_cut(int seq_no, int cut_no) {
+void ColorConvert::PreProcessCut(int seq_no, int cut_no) {
   assert(cut_no == 0);
 }
 
-void ColorConvert::post_process_cut(int seq_no, int cut_no) {
+void ColorConvert::PostProcessCut(int seq_no, int cut_no) {
   assert(cut_no == 0);
 
   cv::cvtColor(cut_outputs[0].mat, cut_outputs[0].mat, cv::COLOR_RGBA2BGR);
@@ -68,18 +67,18 @@ void ColorConvert::post_process_cut(int seq_no, int cut_no) {
   
 }
 
-bool ColorConvert::need_reordering(int cut_index) {
+bool ColorConvert::NeedReordering(int cut_index) {
   return false;
 }
 
-int ColorConvert::get_cut_input_total(int index) {
-  return cut_inputs[index].total();
+int ColorConvert::GetCutInputTotal(int index) {
+  return cut_inputs[index].Total();
 }
-int ColorConvert::get_cut_output_total(int index) {
-  return cut_outputs[index].total();
+int ColorConvert::GetCutOutputTotal(int index) {
+  return cut_outputs[index].Total();
 }
 
-GraphCut ColorConvert::get_execution_cut(const cl::Program& program,
+GraphCut ColorConvert::GetExecutionCut(const cl::Program& program,
                                   const cl::Pipe& read_pipe,
                                   const cl::Pipe& write_pipe, 
                                   int seq_no, int cut_id) {
@@ -89,7 +88,7 @@ GraphCut ColorConvert::get_execution_cut(const cl::Program& program,
   cl_int status;
   GraphCut cut;
 
-  cl_uint items = get_cut_input_total(0);
+  cl_uint items = GetCutInputTotal(0);
 
   auto kernel_info = {
     std::make_pair<std::string, ArgVector>("kernel_source", {
@@ -112,6 +111,6 @@ GraphCut ColorConvert::get_execution_cut(const cl::Program& program,
   return cut;
 }
 
-Application* get_app(CLManager* _) {
+Application* GetAppliaction(OpenCLManager* _) {
   return new ColorConvert(1);
 }

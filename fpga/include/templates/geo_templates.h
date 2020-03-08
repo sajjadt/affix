@@ -1,21 +1,21 @@
 #pragma once
 #include "common.h"
 
-#define WARP_LOAD(NAME, FUNC, SIMD_LEN, OUT_CH)__kernel \
+#define WARP_LOAD(NAME, FUNC, UNROLL, OUT_CH)__kernel \
 void NAME(                                              \
   uint rows,                                            \
   uint cols,                                            \
   global const struct Matrix3x3f* restrict M,           \
   global const uchar* restrict g_mem) {                 \
-  TYPE(data_in, uchar, SIMD_LEN);                       \
-  TYPE(data_out, uchar, SIMD_LEN);                      \
-  TYPE(zero, uchar, SIMD_LEN);                          \
+  TYPE(data_in, uchar, UNROLL);                       \
+  TYPE(data_out, uchar, UNROLL);                      \
+  TYPE(zero, uchar, UNROLL);                          \
   LOG("starting", "warp");                              \
   uint x_ind, y_ind;                                    \
   for(uint y = 0; y < rows; y++) {                      \
-    for(uint x = 0; x < cols ; x += SIMD_LEN) {         \
+    for(uint x = 0; x < cols ; x += UNROLL) {         \
       _Pragma("unroll")                                 \
-      for(int i =0 ;i < SIMD_LEN; i++) {                \
+      for(int i =0 ;i < UNROLL; i++) {                \
         struct Point p_in = {.x = x, .y = y};           \
         struct Point p_out = FUNC(p_in, *M);            \
         int new_x = p_out.x;                            \

@@ -1,7 +1,8 @@
-#include "clio_manager.h"
-#include "cl_manager.h"
- #define CL_HPP_ENABLE_EXCEPTIONS
-    #define CL_HPP_TARGET_OPENCL_VERSION 200
+#include "opencl_io_manager.h"
+#include "opencl_manager.h"
+
+#define CL_HPP_ENABLE_EXCEPTIONS
+#define CL_HPP_TARGET_OPENCL_VERSION 200
    
 #include "CL/cl2.hpp"
 #include "CL/opencl.h"
@@ -13,7 +14,7 @@
 void * (*map_pipe_foo) (cl_mem, cl_map_flags, size_t, size_t *, cl_int *);
 cl_int (*unmap_pipe_foo) (cl_mem, void *, size_t, size_t *);
 
-void CLIOManager::init(const cl::Context& context) {
+void OpenCLIOManager::Init(const cl::Context& context) {
   cl_int status;
   
   map_pipe_foo = (void * (*) (cl_mem, cl_map_flags, size_t, size_t *, cl_int *)) clGetExtensionFunctionAddress("clMapHostPipeIntelFPGA");
@@ -30,14 +31,13 @@ void CLIOManager::init(const cl::Context& context) {
   std::cout<< "Created read/write pipes" << std::endl;
 }
 
-void CLIOManager::release() {
+void OpenCLIOManager::Release() {
   read_pipe.~Pipe();
   write_pipe.~Pipe();
 }
 
 
-void CLIOManager::overlapped_io(unsigned char* inbuffer, unsigned char* outbuffer, cl_ulong insize, cl_ulong outsize) {
-  
+void OpenCLIOManager::OverlappedIO(unsigned char* inbuffer, unsigned char* outbuffer, cl_ulong insize, cl_ulong outsize) {
   size_t total_mapped_size_wr = 0;
   size_t total_mapped_size_rd = 0;
   size_t unmapped_size;
@@ -97,75 +97,6 @@ void CLIOManager::overlapped_io(unsigned char* inbuffer, unsigned char* outbuffe
       }
     }
   }
-  
-  std::cout<<"Done IO" << std::endl;
-  
 }
 
-
-void CLIOManager::io(unsigned char* inbuffer, unsigned char* outbuffer, cl_ulong insize, cl_ulong outsize) {
-/*
-  size_t total_mapped_size_wr = 0;
-  size_t total_mapped_size_rd = 0;
-  size_t unmapped_size;
-  size_t mapped_size;
-  cl_int errcode;
-  cl_ulong * buffer;
-  int error = 0;
-  size_t prev;
-  
-  while (total_mapped_size_wr < insize) {
-    if ( total_mapped_size_wr != insize ) {
-      buffer = (cl_ulong *)(*map_pipe_foo) (write_pipe, 0, insize - total_mapped_size_wr, &mapped_size, &errcode);
-      if (errcode && errcode != CL_OUT_OF_RESOURCES) {
-        printf("Write MAP failed with error code: %d\n", errcode);
-        return ;
-      }
-      if (errcode != CL_OUT_OF_RESOURCES) {
-        printf("Mapped %d bytes to write into pipe\n", mapped_size);
-        memcpy ( buffer, (inbuffer + (total_mapped_size_wr)), mapped_size );
-        total_mapped_size_wr += mapped_size;
-
-        unmapped_size = 0;
-        while (unmapped_size != mapped_size) {
-          errcode = (*unmap_pipe_foo) (write_pipe, buffer, mapped_size-unmapped_size, &unmapped_size);
-          if (errcode && errcode != CL_OUT_OF_RESOURCES) {
-            dump_error("Write UNMAP failed with error code: %d\n", errcode);
-            return ;
-          }
-        }
-      }
-    }
-  }
-  printf("Done with write\n");
-  while(total_mapped_size_rd < outsize ) {
-    //printf("Requesting to map %d bytes to read from pipe\n", outsize - total_mapped_size_rd);
-    buffer = (cl_ulong *)(*map_pipe_foo) (read_pipe, 0, outsize - total_mapped_size_rd, &mapped_size, &errcode);
-    if (errcode && errcode != CL_OUT_OF_RESOURCES) {
-      dump_error("Read MAP failed with error code: %d\n", errcode);
-      return ;
-    }
-
-    if (errcode != CL_OUT_OF_RESOURCES) {
-      printf("Mapped %d bytes to read from pipe\n", mapped_size);
-      printf("total_mapped_size_rd = %d and mapped_size = %d\n", total_mapped_size_rd, mapped_size);
-      // for char*
-      memcpy (outbuffer+ total_mapped_size_rd, buffer, mapped_size );
-      
-      total_mapped_size_rd += mapped_size;
-
-      unmapped_size = 0;
-      while (unmapped_size != mapped_size) {
-        errcode = (*unmap_pipe_foo) (read_pipe, buffer, mapped_size-unmapped_size, &unmapped_size);
-        if (errcode && errcode != CL_OUT_OF_RESOURCES) {
-          dump_error("Read UNMAP failed with error code: %d\n", errcode);
-          return ;
-        }
-      }
-    }
-  }
-  
-  std::cout<<"Done IO" << std::endl;
-  */
-}
 

@@ -16,26 +16,16 @@ else()
     message( STATUS "\nBuild type is ${CMAKE_BUILD_TYPE}" )
 endif()
 
-# Dependancie: Uses OpenCV and Intel OpenVX libs
-find_package(OpenVX REQUIRED)
-# Buidling against OpnCV provided by Intel CV SDK
-if(EXISTS "${INTEL_CVSDK_DIR}/opencv/share/OpenCV" )
-  set(OpenCV_DIR "${INTEL_CVSDK_DIR}/opencv/share/OpenCV")
-endif()
 find_package(OpenCV PATHS ${OpenCV_DIR} REQUIRED)
-
-
 set(LIBS ${LIBS} ${OpenCV_LIBS})
-set(LIBS ${LIBS} ${OpenVX_LIBS})
 
 # CXX Flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -shared -fPIC -pthread -Wall -Wextra -pedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -shared -fPIC -pthread -Wall -Wextra -pedantic")
 
 # Apps source
 file(GLOB FILES
   ${CMAKE_SOURCE_DIR}/./*.cpp
 )
-
 
 # Compile individually
 FOREACH(FILE_ ${FILES})
@@ -43,7 +33,6 @@ FOREACH(FILE_ ${FILES})
   get_filename_component(FILE_NAME ${FILE_} NAME_WE)
   set(TARGET ${FILE_NAME})
 
-  include_directories(${OpenVX_INCLUDE})
   include_directories(${OpenCV_INCLUDE})
   include_directories(${CMAKE_SOURCE_DIR}/../include)
   include_directories(${CMAKE_SOURCE_DIR}/../../common/include)
@@ -54,7 +43,5 @@ FOREACH(FILE_ ${FILES})
     SUBVERSION 1
     PUBLIC_HEADER application.h
   )
-
-  # TODO: install step
 
 ENDFOREACH()

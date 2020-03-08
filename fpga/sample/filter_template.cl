@@ -72,12 +72,12 @@ constant short coeffs[9] = {1, 8, 28, 56, 70, 56, 28, 8, 1};
 CHANNEL(ch_filter0, uchar, SIMD_SIZE, DEFAULT_CHANNEL_DEPTH)
 STENCIL_KERNEL_COL_GEN(kernel_filter, TILE_DIM, SIMD_SIZE, 9, uchar, uchar, col_filter_symm_9, ch_source, ch_filter0, coeffs, 8)
 STENCIL_KERNEL_ROW_GEN(kernel_filter1, TILE_DIM, SIMD_SIZE, 9, uchar, uchar, row_filter_symm_9, ch_filter0, ch_filter, coeffs, 8)
-#elif defined SEPFILTER
-constant short col_coeffs[11] = {-5, -5, -5, 6, 6, 6, 6, 6, -5, -5, -5};
-constant short row_coeffs[3] = {5, 5, 5};
-CHANNEL(ch_filter0, uchar, SIMD_SIZE, DEFAULT_CHANNEL_DEPTH)
-STENCIL_KERNEL_COL_GEN(kernel_filter, TILE_DIM, SIMD_SIZE, 11, uchar, uchar, col_filter_11, ch_source, ch_filter0, col_coeffs, 0)
-STENCIL_KERNEL_ROW_GEN(kernel_filter1, TILE_DIM, SIMD_SIZE, 3, uchar, uchar, row_filter_3, ch_filter0, ch_filter, row_coeffs, 4)
+// #elif defined SEPFILTER
+// constant short col_coeffs[11] = {-5, -5, -5, 6, 6, 6, 6, 6, -5, -5, -5};
+// constant short row_coeffs[3] = {5, 5, 5};
+// CHANNEL(ch_filter0, uchar, SIMD_SIZE, DEFAULT_CHANNEL_DEPTH)
+// STENCIL_KERNEL_COL_GEN(kernel_filter, TILE_DIM, SIMD_SIZE, 11, uchar, uchar, col_filter_11, ch_source, ch_filter0, col_coeffs, 0)
+// STENCIL_KERNEL_ROW_GEN(kernel_filter1, TILE_DIM, SIMD_SIZE, 3, uchar, uchar, row_filter_3, ch_filter0, ch_filter, row_coeffs, 4)
 #elif defined G9X9
 STENCIL_KERNEL(kernel_filter, TILE_DIM, SIMD_SIZE, 9, uchar, uchar, gaussian9x9, ch_source, ch_filter)
 #elif defined G9X9SYMM

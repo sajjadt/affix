@@ -17,21 +17,21 @@
 #include <vector>
 #include "cut.h"
 
-class CLManager {
+class OpenCLManager {
 public:
-  CLManager(){}
-  void init_cl(const std::string&);
-  void cleanup();
-  void enqueue_cut(GraphCut);
-  void get_device_info();
-  void wait_finish(int);
-  void program_board(int no);
-  cl::Buffer create_fpga_buffer(cl_mem_flags, size_t);
-  cl::Buffer create_fpga_buffer(cl_mem_flags, size_t, void*);
+  OpenCLManager(){}
+  void Init(const std::string&);
+  void Cleanup();
+  void EnqueueCut(GraphCut);
+  void GetDeviceInfo();
+  void WaitUntilFinished(int);
+  void ConfigureFPGA(int no);
+  cl::Buffer CreateFpgaBuffer(cl_mem_flags, size_t);
+  cl::Buffer CreateFpgaBuffer(cl_mem_flags, size_t, void*);
 private:
-  cl::Program createProgramFromBinary(const cl::Context&, const std::string&, const std::vector<cl::Device>&);
-  char *loadBinaryFile(const char*, size_t*);
-  bool fileExists(const char *);
+  cl::Program CreateProgramFromBinary(const cl::Context&, const std::string&, const std::vector<cl::Device>&);
+  char *LoadBinaryFile(const char*, size_t*);
+  bool FileExists(const char *);
   const static int MAX_KERNELS = 100;
   const static int MAX_QUEUES = 100;
 
