@@ -36,7 +36,7 @@ make
 
 The following picture shows this process.
 
-![components.png](docs/images/comp.png)
+![components.png](docs/images/components.png)
 
 ## FPGA Board Support
 This project is using OpenCL to configure and control the FPGA acceleration. We have used Arria10 GX dev kit (a10gx_hostch board variant) during development. We have tried to use the vendor specific extension as little as possible to make it easier to port this work to other development kits or different FPGA vendors.
